@@ -6,9 +6,9 @@ function ProductDetailPage(props) {
   const { loadedProduct } = props;
 
   // 💫fallback이 true일 때, 페이지가 즉시 생성되지 않으므로 초기 상태 처리 필요 => 미작성시, 빌드시 오류
-  // if (!loadedProduct) {
-  //   return <p>Loading...</p>; // 데이터를 불러오는 동안 사용자에게 로딩 상태 표시
-  // }
+  if (!loadedProduct) {
+    return <p>Loading...</p>; // 데이터를 불러오는 동안 사용자에게 로딩 상태 표시
+  }
 
   return (
     <Fragment>
@@ -33,6 +33,13 @@ export async function getStaticProps(context) {
 
   const product = data.products.find((product) => product.id === prodcutId);
 
+  // 💡 존재하지 않는 product ID에 대한 요청 처리 (예: P4)
+  if (!product) {
+    return { notFound: true }; // 존재하지 않는 경우 404 페이지 반환
+    // fallback: true일 때, "Loading..." 표시 후 404 (빠른 응답이 중요할 때: 전자상거래/뉴스)
+    // fallback: "blocking"이라면, 즉시 404페이지 반환 (SEO가 중요할 때: 블로그, 문서)
+  }
+
   return {
     props: {
       loadedProduct: product,
@@ -44,18 +51,18 @@ export async function getStaticProps(context) {
 // 다음과 같은 getStaticPaths()없이 getStaticProps()만 사용해 데이터를 가져오면 에러가 발생한다.
 export async function getStaticPaths() {
   const data = await getData();
-  // 🖍️ 실제 개발 환경에서 짜야 할 코드!! (개발자로서 데이터 양 예측 불가능.. 무조건 있는 거 다 가져와!!)
+  // 🖍️ 실제 개발 환경에서 짜야 할 코드!! (모든 제품 ID를 가져와서 동적 경로 생성)
   const ids = data.products.map((product) => product.id);
   const pathsWithParams = ids.map((id) => {
     params: {
-      pid: id;
+      pid: id; // 🌟 동적 라우팅을 위한 ID 설정
     }
   });
 
   return {
-    paths: pathsWithParams,
+    paths: pathsWithParams, // 🌟 `paths` 배열에 포함된 ID들은 미리 생성됨
     // 1️⃣ fallback: true
-    fallback: false, // 🖍️'모든' 데이터의 id에 mapping 함수를 씌어 paths값을 설정했으므로 false로..
+    fallback: true, // 🖍️'모든' 데이터의 id에 mapping 함수를 씌어 paths값을 설정했으므로 false로..
     // 아마존과 같은 수많은 데이터 로드가 필요한 웹에서는 모든 데이터를 pre-generate하는게 부담!!
     // => 몇가지 빈번히 접속되는 params만 등록하고, 그 외 pathpaths에 포함되지 않은 페이지도 동적 생성 가능하도록 true로 설정.. 즉, 사용자가 드물게 방문하는 페이지는 미리 생성하지 않고 필요할 때만 생성
     // 미리 생성하지 않으면 페이지가 생성될 때까지 시간이 걸리기 때문에 💫초기 로딩 페이지💫 보여줄 필요✅
