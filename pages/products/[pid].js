@@ -28,10 +28,10 @@ async function getData() {
 
 export async function getStaticProps(context) {
   const { params } = context;
-  const prodcutId = params.pid;
+  const productId = params.pid;
   const data = await getData();
 
-  const product = data.products.find((product) => product.id === prodcutId);
+  const product = data.products.find((product) => product.id === productId);
 
   // 💡 존재하지 않는 product ID에 대한 요청 처리 (예: P4)
   if (!product) {
@@ -54,9 +54,11 @@ export async function getStaticPaths() {
   // 🖍️ 실제 개발 환경에서 짜야 할 코드!! (모든 제품 ID를 가져와서 동적 경로 생성)
   const ids = data.products.map((product) => product.id);
   const pathsWithParams = ids.map((id) => {
-    params: {
-      pid: id; // 🌟 동적 라우팅을 위한 ID 설정
-    }
+    return {
+      params: {
+        pid: id, // 🌟 동적 라우팅을 위한 ID 설정
+      },
+    };
   });
 
   return {
