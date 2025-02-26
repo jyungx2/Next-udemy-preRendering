@@ -4,6 +4,12 @@ import fs from "fs/promises";
 
 function ProductDetailPage(props) {
   const { loadedProduct } = props;
+
+  // 💫fallback이 true일 때, 페이지가 즉시 생성되지 않으므로 초기 상태 처리 필요 => 미작성시, 빌드시 오류
+  if (!loadedProduct) {
+    return <p>Loading...</p>; // 데이터를 불러오는 동안 사용자에게 로딩 상태 표시
+  }
+
   return (
     <Fragment>
       <h1>{loadedProduct.title}</h1>
@@ -38,7 +44,18 @@ export async function getStaticPaths() {
       { params: { pid: "p2" } },
       { params: { pid: "p3" } },
     ],
-    fallback: false,
+    // 1️⃣ fallback: true
+    fallback: true,
+    // 아마존과 같은 수많은 데이터 로드가 필요한 웹에서는 모든 데이터를 pre-generate하는게 부담!!
+    // => 몇가지 빈번히 접속되는 params만 등록하고, 그 외 pathpaths에 포함되지 않은 페이지도 동적 생성 가능하도록 true로 설정.. 즉, 사용자가 드물게 방문하는 페이지는 미리 생성하지 않고 필요할 때만 생성
+    // 미리 생성하지 않으면 페이지가 생성될 때까지 시간이 걸리기 때문에 💫초기 로딩 페이지💫 보여줄 필요✅
+    // => 빠른 응답을 위해 초기 로딩 페이지를 보여주고, 데이터가 로드되면 업데이트됨
+
+    // 2️⃣ fallback: "blocking"
+    // fallback: "blocking",
+    // 데이터가 준비될 때까지 기다렸다가 한 번에 페이지를 제공. => 주로 SEO가 중요한 페이지에서 사용됨
+    // ✅ paths에 없는 페이지를 방문하면, 데이터가 준비될 때까지 페이지 응답을 지연
+    // 즉, 로딩 상태 없이 완전히 생성된 페이지를 반환 (서버에서 먼저 생성 후 클라이언트에 제공)
   };
 }
 
