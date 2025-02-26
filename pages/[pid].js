@@ -6,9 +6,9 @@ function ProductDetailPage(props) {
   const { loadedProduct } = props;
 
   // 💫fallback이 true일 때, 페이지가 즉시 생성되지 않으므로 초기 상태 처리 필요 => 미작성시, 빌드시 오류
-  if (!loadedProduct) {
-    return <p>Loading...</p>; // 데이터를 불러오는 동안 사용자에게 로딩 상태 표시
-  }
+  // if (!loadedProduct) {
+  //   return <p>Loading...</p>; // 데이터를 불러오는 동안 사용자에게 로딩 상태 표시
+  // }
 
   return (
     <Fragment>
@@ -18,13 +18,18 @@ function ProductDetailPage(props) {
   );
 }
 
-export async function getStaticProps(context) {
-  const { params } = context;
-  const prodcutId = params.pid;
-
+async function getData() {
   const filePath = path.join(process.cwd(), "data", "dummy-backend.json");
   const jsonData = await fs.readFile(filePath);
   const data = JSON.parse(jsonData);
+
+  return data;
+}
+
+export async function getStaticProps(context) {
+  const { params } = context;
+  const prodcutId = params.pid;
+  const data = await getData();
 
   const product = data.products.find((product) => product.id === prodcutId);
 
@@ -38,14 +43,19 @@ export async function getStaticProps(context) {
 // Dynamic Page의 경우, 서버 측에서 얼마나 많은 양의 상세페이지가 로드될지 알 방법이 없기 때문에
 // 다음과 같은 getStaticPaths()없이 getStaticProps()만 사용해 데이터를 가져오면 에러가 발생한다.
 export async function getStaticPaths() {
+  const data = await getData();
+  // 🖍️
+  const ids = data.products.map((product) => product.id);
+  const pathsWithParams = ids.map((id) => {
+    params: {
+      pid: id;
+    }
+  });
+
   return {
-    paths: [
-      { params: { pid: "p1" } },
-      { params: { pid: "p2" } },
-      { params: { pid: "p3" } },
-    ],
+    paths: pathsWithParams,
     // 1️⃣ fallback: true
-    fallback: true,
+    fallback: false, // 🖍️'모든' 데이터의 id에 mapping 함수를 씌어 paths값을 설정했으므로 false로..
     // 아마존과 같은 수많은 데이터 로드가 필요한 웹에서는 모든 데이터를 pre-generate하는게 부담!!
     // => 몇가지 빈번히 접속되는 params만 등록하고, 그 외 pathpaths에 포함되지 않은 페이지도 동적 생성 가능하도록 true로 설정.. 즉, 사용자가 드물게 방문하는 페이지는 미리 생성하지 않고 필요할 때만 생성
     // 미리 생성하지 않으면 페이지가 생성될 때까지 시간이 걸리기 때문에 💫초기 로딩 페이지💫 보여줄 필요✅
