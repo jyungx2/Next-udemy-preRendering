@@ -44,7 +44,7 @@ export async function getStaticProps(context) {
 // 다음과 같은 getStaticPaths()없이 getStaticProps()만 사용해 데이터를 가져오면 에러가 발생한다.
 export async function getStaticPaths() {
   const data = await getData();
-  // 🖍️
+  // 🖍️ 실제 개발 환경에서 짜야 할 코드!! (개발자로서 데이터 양 예측 불가능.. 무조건 있는 거 다 가져와!!)
   const ids = data.products.map((product) => product.id);
   const pathsWithParams = ids.map((id) => {
     params: {
